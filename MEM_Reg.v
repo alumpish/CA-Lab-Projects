@@ -1,22 +1,22 @@
 module MEM_Reg (
-    input clk, rst, WB_EN_MEM, MEM_R_EN_MEM,
-    input[31:0] ALU_res_MEM, mem_out_MEM,
-    input[3:0] Dest_MEM, 
+    input clk, rst, WB_EN_in, MEM_R_EN_in,
+    input[31:0] ALU_res_in, mem_out,
+    input[3:0] Dest_in, 
 
-    output reg WB_EN, MEM_R_EN, 
-    output reg[31:0] ALU_res, mem_out,
-    output reg[3:0] Dest
+    output reg WB_EN_out, MEM_R_EN_out, 
+    output reg[31:0] ALU_res_out, mem_out,
+    output reg[3:0] Dest_out
 
 );
 
     always @(posedge clk, posedge rst) begin
         if (rst) begin
-            Dest <= 0;
+            Dest_out <= 0;
         end else begin
-            WB_EN <= WB_EN_MEM;
-            MEM_R_EN <= MEM_R_EN_MEM;
-            Dest <= Dest_MEM;
-            ALU_res <= ALU_res_MEM;
+            WB_EN_out <= WB_EN_in;
+            MEM_R_EN_out <= MEM_R_EN_in;
+            Dest_out <= Dest_in;
+            ALU_res_out <= ALU_res_in;
         end
     end
 

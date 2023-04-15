@@ -19,7 +19,7 @@ module ARM (
   wire[23:0] signed_imm_24_EXE;
 
   wire wb_en_MEM, mem_r_en_MEM, mem_w_en_MEM;
-  wire[31:0] ALU_res_MEM, ST_val_MEM, mem_out_MEM;
+  wire[31:0] ALU_res_MEM, val_rm_MEM, mem_out_MEM;
 
 
   wire[3:0] Dest_MEM;
@@ -128,84 +128,82 @@ module ARM (
          );
 
   EXE_Stage exe_stage(
-    .clk(clk),
-    .rst(rst),
-    .EXE_CMD(exe_cmd_EXE),
-    .MEM_R_EN(mem_r_en_EXE),
-    .MEM_W_EN(mem_w_en_EXE),
-    .PC(PC_EXE),
-    .Val_Rm(val_rm_EXE),
-    .Val_Rn(val_rn_EXE),
-    .imm(imm_EXE),
-    .Shift_operand(shift_operand_EXE),
-    .Signed_imm_24(signed_imm_24_EXE),
-    .status_IN(status_EXE_in),
+              .clk(clk),
+              .rst(rst),
+              .EXE_CMD(exe_cmd_EXE),
+              .MEM_R_EN(mem_r_en_EXE),
+              .MEM_W_EN(mem_w_en_EXE),
+              .PC(PC_EXE),
+              .Val_Rm(val_rm_EXE),
+              .Val_Rn(val_rn_EXE),
+              .imm(imm_EXE),
+              .Shift_operand(shift_operand_EXE),
+              .Signed_imm_24(signed_imm_24_EXE),
+              .status_IN(status_EXE_in),
 
-    .ALU_res(ALU_res_EXE),
-    .Br_addr(branchAddr),
-    .status(status_EXE_out)
+              .ALU_res(ALU_res_EXE),
+              .Br_addr(branchAddr),
+              .status(status_EXE_out)
 
-  );
+            );
 
-    EXE_Reg exe_reg(
-      .clk(clk),
-      .rst(rst),
-      .WB_en_in(wb_en_EXE),
-      .MEM_R_EN_in(mem_r_en_EXE),
-      .MEM_W_EN_in(mem_w_en_EXE),
-      .ALU_res_in(ALU_res_EXE),
-      .ST_val_in(val_rm_EXE),
-      .Dest_in(dest_EXE),
+  EXE_Reg exe_reg(
+            .clk(clk),
+            .rst(rst),
+            .WB_en_in(wb_en_EXE),
+            .MEM_R_EN_in(mem_r_en_EXE),
+            .MEM_W_EN_in(mem_w_en_EXE),
+            .ALU_res_in(ALU_res_EXE),
+            .ST_val_in(val_rm_EXE),
+            .Dest_in(dest_EXE),
 
-      .WB_en(wb_en_MEM),
-      .MEM_R_EN(mem_r_en_MEM),
-      .MEM_W_EN(mem_w_en_MEM),
-      .ALU_res(ALU_res_MEM),
-      .ST_val(ST_val_MEM),
-      .Dest(Dest_MEM)
+            .WB_en(wb_en_MEM),
+            .MEM_W_EN(mem_w_en_MEM),
+            .MEM_R_EN(mem_r_en_MEM),
+            .ALU_res(ALU_res_MEM),
+            .ST_val(val_rm_MEM),
+            .Dest(Dest_MEM)
 
-    );
+          );
 
-    MEM_Stage mem_stage(
-        .clk(clk),
-        .rst(rst),
-        .MEM_W_EN(mem_w_en_MEM),
-        .MEM_R_EN(mem_r_en_MEM),
-        .ALU_res(ALU_res_MEM),
-        .ST_val(ST_val_MEM),
+  MEM_Stage mem_stage(
+              .clk(clk),
+              .rst(rst),
+              .MEM_W_EN(mem_w_en_MEM),
+              .MEM_R_EN(mem_r_en_MEM),
+              .ALU_res(ALU_res_MEM),
+              .ST_val(val_rm_MEM),
 
-        .mem_out(mem_out_MEM)
+              .mem_out(mem_out_MEM)
+            );
 
-    );
+  MEM_Reg mem_reg(
+            .clk(clk),
+            .rst(rst),
+            .WB_EN_in(wb_en_MEM),
+            .MEM_R_EN_in(mem_r_en_MEM),
+            .ALU_res_in(ALU_res_MEM),
+            .mem_out(mem_out_MEM),
+            .Dest_in(Dest_MEM),
 
-    MEM_Reg mem_reg(
-        .clk(clk),
-        .rst(rst),
-        .WB_EN_MEM(wb_en_MEM),
-        .MEM_R_EN_MEM(mem_r_en_MEM),
-        .ALU_res_MEM(ALU_res_MEM),
-        .mem_out_MEM(mem_out_MEM),
-        .Dest_MEM(Dest_MEM),
-        
-        .WB_EN(WB_EN_WB),
-        .MEM_R_EN(MEM_R_EN_WB),
-        .ALU_res(ALU_res_WB),
-        .mem_out(mem_out_WB),
-        .Dest(WB_Dest)
-
-    );
+            .WB_EN_out(WB_EN_WB),
+            .MEM_R_EN_out(MEM_R_EN_WB),
+            .ALU_res_out(ALU_res_WB),
+            .mem_out(mem_out_WB),
+            .Dest_out(WB_Dest)
+          );
 
 
 
   WB_Stage wb_stage(
-    .clk(clk),
-    .rst(rst),
-    .MEM_R_EN(MEM_R_EN_WB),
-    .ALU_res(ALU_res_WB),
-    .mem_out(mem_out_WB),
+             .clk(clk),
+             .rst(rst),
+             .MEM_R_EN(MEM_R_EN_WB),
+             .ALU_res(ALU_res_WB),
+             .mem_out(mem_out_WB),
 
-    .WB_value(WB_value)
-  ); 
+             .WB_value(WB_value)
+           );
 
 
 endmodule
