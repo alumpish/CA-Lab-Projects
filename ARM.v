@@ -10,10 +10,10 @@ module ARM (
   wire[31:0] val_rn_ID, val_rm_ID, PC_ID, inst_ID;
   wire[11:0] shift_operand_ID;
   wire[23:0] signed_imm_24_ID;
-  wire two_src;
+  wire two_src, use_src1;
 
   wire wb_en_EXE, mem_r_en_EXE, mem_w_en_EXE, s_EXE, imm_EXE;
-  wire[3:0] exe_cmd_EXE, dest_EXE;
+  wire[3:0] exe_cmd_EXE, dest_EXE, src1, src2;
   wire[31:0] val_rn_EXE, val_rm_EXE, PC_EXE, ALU_res_EXE;
   wire[11:0] shift_operand_EXE;
   wire[23:0] signed_imm_24_EXE;
@@ -48,7 +48,7 @@ module ARM (
   IF_Stage if_stage (
              .clk(clk),
              .rst(rst),
-             .freeze(1'b0),
+             .freeze(hazard),
              .branch_taken(b_ID),
              .branch_address(branchAddr),
              .PC(PC_IF),
@@ -58,7 +58,7 @@ module ARM (
   IF_Reg if_reg (
            .clk(clk),
            .rst(rst),
-           .freeze(1'b0),
+           .freeze(hazard),
            .flush(branch_taken),
            .PC_in(PC_IF),
            .instruction_in(inst_IF),
@@ -66,10 +66,22 @@ module ARM (
            .instruction_out(inst_ID)
          );
 
+  HazardDetector hazard_unit(
+                   .src1(src1),
+                   .src2(src2),
+                   .Exe_Dest(dest_EXE),
+                   .Exe_WB_EN(wb_en_EXE),
+                   .Mem_Dest(Dest_MEM),
+                   .Mem_WB_EN(wb_en_MEM),
+                   .Two_src(two_src),
+                   .use_src1(use_src1),
+                   .hazard_Detected(hazard)
+                 );
+
   ID_Stage id_stage (
              .clk(clk),
              .rst(rst),
-             .hazard(1'b0),
+             .hazard(hazard),
              .WB_WB_EN(WB_EN_WB),
              .WB_Dest(WB_Dest),
              .WB_Value(WB_value),
@@ -82,13 +94,16 @@ module ARM (
              .B(b_ID),
              .S(s_ID),
              .Two_src(two_src),
+             .use_src1(use_src1),
              .imm(imm_ID),
              .EXE_CMD(exe_cmd_ID),
              .Dest(dest_ID),
              .shift_operand(shift_operand_ID),
              .signed_imm_24(signed_imm_24_ID),
              .Val_Rn(val_rn_ID),
-             .Val_Rm(val_rm_ID)
+             .Val_Rm(val_rm_ID),
+             .src1(src1),
+             .src2(src2)
            );
 
   ID_Reg id_reg (
@@ -144,7 +159,6 @@ module ARM (
               .ALU_res(ALU_res_EXE),
               .Br_addr(branchAddr),
               .status(status_EXE_out)
-
             );
 
   EXE_Reg exe_reg(
@@ -183,7 +197,7 @@ module ARM (
             .WB_EN_in(wb_en_MEM),
             .MEM_R_EN_in(mem_r_en_MEM),
             .ALU_res_in(ALU_res_MEM),
-            .mem_out(mem_out_MEM),
+            .mem_in(mem_out_MEM),
             .Dest_in(Dest_MEM),
 
             .WB_EN_out(WB_EN_WB),
