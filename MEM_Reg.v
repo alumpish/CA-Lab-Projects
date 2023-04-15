@@ -1,26 +1,23 @@
 module MEM_Reg (
-    input clk, rst, freeze, flush,
-    input [31:0] PC_in, instruction_in,
-    output reg [31:0] PC_out, instruction_out
-  );
+    input clk, rst, WB_EN_MEM, MEM_R_EN_MEM,
+    input[31:0] ALU_res_MEM, mem_out_MEM,
+    input[3:0] Dest_MEM, 
 
-  always @(posedge clk, posedge rst)
-  begin
-    if (rst)
-    begin
-      PC_out <= 0;
-      instruction_out <= 0;
+    output reg WB_EN, MEM_R_EN, 
+    output reg[31:0] ALU_res, mem_out,
+    output reg[3:0] Dest
+
+);
+
+    always @(posedge clk, posedge rst) begin
+        if (rst) begin
+            Dest <= 0;
+        end else begin
+            WB_EN <= WB_EN_MEM;
+            MEM_R_EN <= MEM_R_EN_MEM;
+            Dest <= Dest_MEM;
+            ALU_res <= ALU_res_MEM;
+        end
     end
-    else if (flush)
-    begin
-      PC_out <= 0;
-      instruction_out <= 0;
-    end
-    else if (~freeze)
-    begin
-      PC_out <= PC_in;
-      instruction_out <= instruction_in;
-    end
-  end
 
 endmodule
