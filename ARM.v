@@ -49,7 +49,7 @@ module ARM (
              .clk(clk),
              .rst(rst),
              .freeze(hazard),
-             .branch_taken(b_ID),
+             .branch_taken(branch_taken),
              .branch_address(branchAddr),
              .PC(PC_IF),
              .instruction(inst_IF)

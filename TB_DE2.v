@@ -10,7 +10,7 @@ module TB_DE2 ();
   initial
   begin
     clk = 1;
-    repeat (200)
+    repeat (600)
     begin
       #50;
       clk = ~clk;
