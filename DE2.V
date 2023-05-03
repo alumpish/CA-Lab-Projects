@@ -304,7 +304,8 @@ inout	[35:0]	GPIO_1;					//	GPIO Connection 1
 
 ARM arm(
         .clk(CLOCK_50),
-        .rst(SW[0])
+        .rst(SW[0]),
+		.forward_en(SW[3])
     );
 	
 endmodule

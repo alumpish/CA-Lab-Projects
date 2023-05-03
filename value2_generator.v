@@ -11,7 +11,7 @@ module VALUE2_Generator (
     wire[1:0] shift = Shift_operand[6:5];
     reg[63:0] temp_64;
 
-    always @ (*) begin
+    always @ (imm, shift, Shift_operand, RM_value) begin
         temp_64 = 64'b0;
         Val2 = 32'b0;
         if (mem)

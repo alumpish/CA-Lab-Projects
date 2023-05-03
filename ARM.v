@@ -1,5 +1,5 @@
 module ARM (
-    input clk, rst
+    input clk, rst, forward_en
   );
 
   wire branch_taken;
@@ -218,6 +218,7 @@ module ARM (
            );
 
   HazardDetector hazard_unit(
+                   .forward_en(forward_en),
                    .src1(src1_ID),
                    .src2(src2_ID),
                    .Exe_Dest(dest_EXE),
@@ -226,20 +227,19 @@ module ARM (
                    .Mem_WB_EN(wb_en_MEM),
                    .Two_src(two_src),
                    .use_src1(use_src1),
-                   .forward_mode(1'b1),
                    .Exe_Mem_R_EN(mem_r_en_EXE),
                    .hazard_Detected(hazard)
                  );
 
   ForwardingUnit FU (
-                   .forward_en(1'b1),
+                   .forward_en(forward_en),
                    .src1(src1_EXE),
                    .src2(src2_EXE),
                    .MEM_WB_en(wb_en_MEM),
                    .MEM_dest(Dest_MEM),
                    .WB_WB_en(WB_EN_WB),
                    .WB_dest(WB_Dest),
-                   
+
                    .sel_src1(sel_src1),
                    .sel_src2(sel_src2)
                  );

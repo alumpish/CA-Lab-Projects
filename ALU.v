@@ -8,7 +8,7 @@ module ALU (
 	output N, Z
 );
 
-    always @ (*) begin
+    always @ (input1, input2, carry_in, command) begin
         out = 32'b0;
         carry_out = 1'b0;
         case (command) 
@@ -28,7 +28,7 @@ module ALU (
     assign N = out[31];
     assign Z = (out == 32'b0);
 
-    always @(*) begin
+    always @(input1, input2, carry_in, command) begin
         V = 1'b0;
         case (command)
             4'b0010: V = (input1[31] & input2[31] & (~N)) || ( (~input1[31]) & (~input2[31]) & N);

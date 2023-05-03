@@ -1,15 +1,17 @@
 module TB_DE2 ();
 
-  reg clk, rst;
+  reg clk, rst, forward_en;
 
   ARM arm (
         .clk(clk),
-        .rst(rst)
+        .rst(rst),
+        .forward_en(forward_en)
       );
 
   initial
   begin
     clk = 1;
+    forward_en = 1;
     repeat (600)
     begin
       #50;
