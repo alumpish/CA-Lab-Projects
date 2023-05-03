@@ -13,8 +13,8 @@ module ARM (
   wire two_src, use_src1;
 
   wire wb_en_EXE, mem_r_en_EXE, mem_w_en_EXE, s_EXE, imm_EXE;
-  wire[3:0] exe_cmd_EXE, dest_EXE, src1, src2;
-  wire[31:0] val_rn_EXE, val_rm_EXE, PC_EXE, ALU_res_EXE;
+  wire[3:0] exe_cmd_EXE, dest_EXE, src1_ID, src2_ID, src1_EXE, src2_EXE;
+  wire[31:0] val_rn_EXE, val_rm_EXE, PC_EXE, ALU_res_EXE, val_rm_EXE_out;
   wire[11:0] shift_operand_EXE;
   wire[23:0] signed_imm_24_EXE;
 
@@ -35,6 +35,9 @@ module ARM (
   wire[31:0] ALU_res_WB, mem_out_WB;
 
   wire[3:0] status_EXE_in, status_EXE_out, status_ID;
+
+  wire [1:0] sel_src1, sel_src2;
+
 
   StatusRegister status_register (
                    .clk(clk),
@@ -66,18 +69,6 @@ module ARM (
            .instruction_out(inst_ID)
          );
 
-  HazardDetector hazard_unit(
-                   .src1(src1),
-                   .src2(src2),
-                   .Exe_Dest(dest_EXE),
-                   .Exe_WB_EN(wb_en_EXE),
-                   .Mem_Dest(Dest_MEM),
-                   .Mem_WB_EN(wb_en_MEM),
-                   .Two_src(two_src),
-                   .use_src1(use_src1),
-                   .hazard_Detected(hazard)
-                 );
-
   ID_Stage id_stage (
              .clk(clk),
              .rst(rst),
@@ -102,8 +93,8 @@ module ARM (
              .signed_imm_24(signed_imm_24_ID),
              .Val_Rn(val_rn_ID),
              .Val_Rm(val_rm_ID),
-             .src1(src1),
-             .src2(src2)
+             .src1(src1_ID),
+             .src2(src2_ID)
            );
 
   ID_Reg id_reg (
@@ -125,6 +116,8 @@ module ARM (
            .signed_imm_24_in(signed_imm_24_ID),
            .Dest_in(dest_ID),
            .Status_R_in(status_ID),
+           .src1_in(src1_ID),
+           .src2_in(src2_ID),
 
            .WB_EN_out(wb_en_EXE),
            .MEM_R_EN_out(mem_r_en_EXE),
@@ -139,7 +132,9 @@ module ARM (
            .shift_operand_out(shift_operand_EXE),
            .signed_imm_24_out(signed_imm_24_EXE),
            .Dest_out(dest_EXE),
-           .Status_R_out(status_EXE_in)
+           .Status_R_out(status_EXE_in),
+           .src1_out(src1_EXE),
+           .src2_out(src2_EXE)
          );
 
   EXE_Stage exe_stage(
@@ -149,15 +144,20 @@ module ARM (
               .MEM_R_EN(mem_r_en_EXE),
               .MEM_W_EN(mem_w_en_EXE),
               .PC(PC_EXE),
-              .Val_Rm(val_rm_EXE),
+              .Val_Rm_in(val_rm_EXE),
               .Val_Rn(val_rn_EXE),
+              .ALU_res_f(ALU_res_MEM),
+              .WB_val_f(WB_value),
               .imm(imm_EXE),
               .Shift_operand(shift_operand_EXE),
               .Signed_imm_24(signed_imm_24_EXE),
               .status_IN(status_EXE_in),
+              .sel_src1(sel_src1),
+              .sel_src2(sel_src2),
 
               .ALU_res(ALU_res_EXE),
               .Br_addr(branchAddr),
+              .Val_Rm_out(val_rm_EXE_out),
               .status(status_EXE_out)
             );
 
@@ -168,7 +168,7 @@ module ARM (
             .MEM_R_EN_in(mem_r_en_EXE),
             .MEM_W_EN_in(mem_w_en_EXE),
             .ALU_res_in(ALU_res_EXE),
-            .ST_val_in(val_rm_EXE),
+            .ST_val_in(val_rm_EXE_out),
             .Dest_in(dest_EXE),
 
             .WB_en(wb_en_MEM),
@@ -207,8 +207,6 @@ module ARM (
             .Dest_out(WB_Dest)
           );
 
-
-
   WB_Stage wb_stage(
              .clk(clk),
              .rst(rst),
@@ -218,6 +216,33 @@ module ARM (
 
              .WB_value(WB_value)
            );
+
+  HazardDetector hazard_unit(
+                   .src1(src1_ID),
+                   .src2(src2_ID),
+                   .Exe_Dest(dest_EXE),
+                   .Exe_WB_EN(wb_en_EXE),
+                   .Mem_Dest(Dest_MEM),
+                   .Mem_WB_EN(wb_en_MEM),
+                   .Two_src(two_src),
+                   .use_src1(use_src1),
+                   .forward_mode(1'b1),
+                   .Exe_Mem_R_EN(mem_r_en_EXE),
+                   .hazard_Detected(hazard)
+                 );
+
+  ForwardingUnit FU (
+                   .forward_en(1'b1),
+                   .src1(src1_EXE),
+                   .src2(src2_EXE),
+                   .MEM_WB_en(wb_en_MEM),
+                   .MEM_dest(Dest_MEM),
+                   .WB_WB_en(WB_EN_WB),
+                   .WB_dest(WB_Dest),
+                   
+                   .sel_src1(sel_src1),
+                   .sel_src2(sel_src2)
+                 );
 
 
 endmodule

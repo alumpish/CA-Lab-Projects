@@ -3,30 +3,44 @@ module EXE_Stage (
     input[3:0] EXE_CMD,
     input MEM_R_EN, MEM_W_EN,
     input[31:0] PC,
-    input[31:0] Val_Rm, Val_Rn,
+    input[31:0] Val_Rm_in, Val_Rn, ALU_res_f, WB_val_f,
     input imm,
     input[11:0] Shift_operand,
     input[23:0] Signed_imm_24,
     input[3:0] status_IN,
+    input [1:0] sel_src1, sel_src2,
 
-    output[31:0] ALU_res, Br_addr,
+    output[31:0] ALU_res, Br_addr, Val_Rm_out,
     output[3:0] status
-);
+  );
+  wire [31:0] ALU_src_1, Val2_src;
 
-    wire[31:0] Signed_imm_32 = { {6{Signed_imm_24[23]}}, Signed_imm_24, 2'b00};
-    wire mem = MEM_R_EN || MEM_W_EN;
-    wire[31:0] Val2;
+  wire[31:0] Signed_imm_32 = { {6{Signed_imm_24[23]}}, Signed_imm_24, 2'b00};
+  wire mem = MEM_R_EN || MEM_W_EN;
+  wire[31:0] Val2;
 
-    VALUE2_Generator value2_generator(
-        .Shift_operand(Shift_operand),
-        .RM_value(Val_Rm),
-        .imm(imm),
-        .mem(mem),
-        .Val2(Val2)
-    );
+  assign ALU_src_1 = (sel_src1 == 2'b00) ? Val_Rn :
+         (sel_src1 == 2'b01) ? ALU_res_f:
+         (sel_src1 == 2'b10) ? WB_val_f:
+         Val_Rn;
 
-    ALU alu(
-        .input1(Val_Rn),
+  assign Val2_src = (sel_src2 == 2'b00) ? Val_Rm_in :
+         (sel_src2 == 2'b01) ? ALU_res_f:
+         (sel_src2 == 2'b10) ? WB_val_f:
+         Val_Rm_in;
+
+  assign Val_Rm_out = Val2_src;
+
+  VALUE2_Generator value2_generator(
+                     .Shift_operand(Shift_operand),
+                     .RM_value(Val2_src),
+                     .imm(imm),
+                     .mem(mem),
+                     .Val2(Val2)
+                   );
+
+  ALU alu(
+        .input1(ALU_src_1),
         .input2(Val2),
         .carry_in(status_IN[1]),
         .command(EXE_CMD),
@@ -35,12 +49,12 @@ module EXE_Stage (
         .V(status[0]),
         .Z(status[2]),
         .N(status[3])
-    );
+      );
 
-    Adder adder(
-        .a(PC),
-        .b(Signed_imm_32),
-        .res(Br_addr)
-    );
+  Adder adder(
+          .a(PC),
+          .b(Signed_imm_32),
+          .res(Br_addr)
+        );
 
 endmodule
