@@ -21,7 +21,7 @@ module ID_Stage (
   wire S_in = Ins[20];
   wire [3:0] Rn = Ins[19:16];
   wire [3:0] Rd = Ins[15:12];
-  wire [3:0] Rm = MEM_W_EN ? Rd : Ins[3:0];
+  wire [3:0] Rm = MEM_W_EN_CU ? Rd : Ins[3:0];
   assign shift_operand = Ins[11:0];
   assign signed_imm_24 = Ins[23:0];
 
@@ -63,7 +63,7 @@ module ID_Stage (
   assign stop = hazard || !Is_Valid;
   assign {EXE_CMD, WB_EN, MEM_R_EN, MEM_W_EN, B, S} = stop ? 9'b0 : {EXE_CMD_CU, WB_EN_CU, MEM_R_EN_CU, MEM_W_EN_CU, B_CU, S_CU};
 
-  assign Two_src = MEM_W_EN || (!I && mode == 2'b00);
+  assign Two_src = MEM_W_EN_CU || (!I && mode == 2'b00);
   assign use_src1 = opcode != 4'b1101 && opcode != 4'b1111 && mode != 2'b10;
   assign src1 = Rn;
   assign src2 = Rm;

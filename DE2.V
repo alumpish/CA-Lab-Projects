@@ -303,7 +303,7 @@ inout	[35:0]	GPIO_0;					//	GPIO Connection 0
 inout	[35:0]	GPIO_1;					//	GPIO Connection 1
 
 ARM arm(
-        .clk(CLOCK_50),
+        .clock(CLOCK_50),
         .rst(SW[0]),
 		.forward_en(SW[3])
     );

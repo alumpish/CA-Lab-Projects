@@ -1,5 +1,5 @@
 module ARM (
-    input clk, rst, forward_en
+    input clock, rst, forward_en
   );
 
   wire branch_taken;
@@ -37,6 +37,12 @@ module ARM (
   wire[3:0] status_EXE_in, status_EXE_out, status_ID;
 
   wire [1:0] sel_src1, sel_src2;
+
+  wire clk;
+  FreqDivider FD(
+        .clk(clock), .rst(rst),
+        .en(1'b1), .co(clk)
+    );
 
 
   StatusRegister status_register (
