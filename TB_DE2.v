@@ -2,7 +2,7 @@ module TB_DE2 ();
 
   reg clk, rst, forward_en;
 
-  ARM arm (
+  System system (
         .clock(clk),
         .rst(rst),
         .forward_en(forward_en)
@@ -12,7 +12,7 @@ module TB_DE2 ();
   begin
     clk = 1;
     forward_en = 1;
-    repeat (1200)
+    repeat (1900)
     begin
       #50;
       clk = ~clk;

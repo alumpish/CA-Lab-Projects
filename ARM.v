@@ -1,6 +1,15 @@
 module ARM (
-    input clock, rst, forward_en
+    input clk, rst, forward_en,
+    inout[15:0] SRAM_DQ,
+    output[17:0] SRAM_ADDR,
+    output SRAM_WE_N,
+    output SRAM_UB_N,
+    output SRAM_LB_N,
+    output SRAM_CE_N,
+    output SRAM_OE_N
   );
+
+  wire ready;
 
   wire branch_taken;
   wire [31:0] branchAddr, PC_IF, inst_IF;
@@ -12,7 +21,7 @@ module ARM (
   wire[23:0] signed_imm_24_ID;
   wire two_src, use_src1;
 
-  wire wb_en_EXE, mem_r_en_EXE, mem_w_en_EXE, s_EXE, imm_EXE;
+  wire wb_en_EXE, mem_r_en_EXE, mem_w_en_EXE, s_EXE, imm_EXE, WB_en_out;
   wire[3:0] exe_cmd_EXE, dest_EXE, src1_ID, src2_ID, src1_EXE, src2_EXE;
   wire[31:0] val_rn_EXE, val_rm_EXE, PC_EXE, ALU_res_EXE, val_rm_EXE_out;
   wire[11:0] shift_operand_EXE;
@@ -38,13 +47,6 @@ module ARM (
 
   wire [1:0] sel_src1, sel_src2;
 
-  wire clk;
-  FreqDivider FD(
-        .clk(clock), .rst(rst),
-        .en(1'b1), .co(clk)
-    );
-
-
   StatusRegister status_register (
                    .clk(clk),
                    .rst(rst),
@@ -57,7 +59,7 @@ module ARM (
   IF_Stage if_stage (
              .clk(clk),
              .rst(rst),
-             .freeze(hazard),
+             .freeze(hazard | ~ready),
              .branch_taken(branch_taken),
              .branch_address(branchAddr),
              .PC(PC_IF),
@@ -67,7 +69,7 @@ module ARM (
   IF_Reg if_reg (
            .clk(clk),
            .rst(rst),
-           .freeze(hazard),
+           .freeze(hazard | ~ready),
            .flush(branch_taken),
            .PC_in(PC_IF),
            .instruction_in(inst_IF),
@@ -106,7 +108,7 @@ module ARM (
   ID_Reg id_reg (
            .clk(clk),
            .rst(rst),
-           .freeze(1'b0),
+           .freeze(~ready),
            .flush(branch_taken),
            .WB_EN_in(wb_en_ID),
            .MEM_R_EN_in(mem_r_en_ID),
@@ -170,6 +172,7 @@ module ARM (
   EXE_Reg exe_reg(
             .clk(clk),
             .rst(rst),
+            .freeze(~ready),
             .WB_en_in(wb_en_EXE),
             .MEM_R_EN_in(mem_r_en_EXE),
             .MEM_W_EN_in(mem_w_en_EXE),
@@ -189,18 +192,29 @@ module ARM (
   MEM_Stage mem_stage(
               .clk(clk),
               .rst(rst),
+              .WB_en(wb_en_MEM),
               .MEM_W_EN(mem_w_en_MEM),
               .MEM_R_EN(mem_r_en_MEM),
               .ALU_res(ALU_res_MEM),
               .ST_val(val_rm_MEM),
 
-              .mem_out(mem_out_MEM)
+              .mem_out(mem_out_MEM),
+              .WB_en_out(WB_en_out),
+              .ready(ready),
+              .SRAM_DQ(SRAM_DQ),
+              .SRAM_ADDR(SRAM_ADDR),
+              .SRAM_WE_N(SRAM_WE_N),
+              .SRAM_UB_N(SRAM_UB_N),
+              .SRAM_LB_N(SRAM_LB_N),
+              .SRAM_CE_N(SRAM_CE_N),
+              .SRAM_OE_N(SRAM_OE_N)
             );
 
   MEM_Reg mem_reg(
             .clk(clk),
             .rst(rst),
-            .WB_EN_in(wb_en_MEM),
+            .freeze(~ready),
+            .WB_EN_in(WB_en_out),
             .MEM_R_EN_in(mem_r_en_MEM),
             .ALU_res_in(ALU_res_MEM),
             .mem_in(mem_out_MEM),
